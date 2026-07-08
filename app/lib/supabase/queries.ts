@@ -3,7 +3,7 @@ import { createClient } from "./server";
 import type { Template } from "@/app/lib/templates";
 
 export async function getTemplates(): Promise<Template[]> {
-  const supabase = await createClient();
+  const supabase = createClient();
   const { data } = await supabase
     .from("templates")
     .select("*")
@@ -13,7 +13,7 @@ export async function getTemplates(): Promise<Template[]> {
 }
 
 export async function getTemplate(id: number): Promise<Template | null> {
-  const supabase = await createClient();
+  const supabase = createClient();
   const { data } = await supabase
     .from("templates")
     .select("*")

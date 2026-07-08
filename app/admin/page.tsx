@@ -1,13 +1,19 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { createClient } from "@/app/lib/supabase/server";
+import { createClient } from "@/app/lib/supabase/client";
 
-export default async function AdminDashboard() {
-  const supabase = await createClient();
-  const { data: templates } = await supabase
-    .from("templates")
-    .select("id", { count: "exact" });
+export default function AdminDashboard() {
+  const supabase = createClient();
+  const [count, setCount] = useState(0);
 
-  const count = templates?.length ?? 0;
+  useEffect(() => {
+    supabase
+      .from("templates")
+      .select("id", { count: "exact", head: true })
+      .then(({ count: c }) => setCount(c ?? 0));
+  }, []);
 
   return (
     <div>

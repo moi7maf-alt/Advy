@@ -1,13 +1,31 @@
-import Link from "next/link";
-import { createClient } from "@/app/lib/supabase/server";
-import { deleteTemplate } from "@/app/lib/supabase/actions";
+"use client";
 
-export default async function AdminTemplatesPage() {
-  const supabase = await createClient();
-  const { data: templates } = await supabase
-    .from("templates")
-    .select("*")
-    .order("created_at", { ascending: false });
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/app/lib/supabase/client";
+import type { Template } from "@/app/lib/templates";
+
+export default function AdminTemplatesPage() {
+  const router = useRouter();
+  const supabase = createClient();
+  const [templates, setTemplates] = useState<Template[]>([]);
+
+  useEffect(() => {
+    supabase
+      .from("templates")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .then(({ data }) => {
+        if (data) setTemplates(data as Template[]);
+      });
+  }, []);
+
+  const handleDelete = async (id: number) => {
+    if (!confirm("Delete this template?")) return;
+    await supabase.from("templates").delete().eq("id", id);
+    setTemplates((prev) => prev.filter((t) => t.id !== id));
+  };
 
   return (
     <div>
@@ -33,7 +51,7 @@ export default async function AdminTemplatesPage() {
             </tr>
           </thead>
           <tbody>
-            {templates?.map((t) => (
+            {templates.map((t) => (
               <tr key={t.id} className="border-b border-zinc-100 last:border-0">
                 <td className="px-4 py-3 text-zinc-900 font-medium">{t.name}</td>
                 <td className="px-4 py-3 text-zinc-600">{t.category}</td>
@@ -57,21 +75,17 @@ export default async function AdminTemplatesPage() {
                     >
                       Edit
                     </Link>
-                    <form
-                      action={async () => { await deleteTemplate(t.id); }}
-                      onSubmit={(e) => {
-                        if (!confirm("Delete this template?")) e.preventDefault();
-                      }}
+                    <button
+                      onClick={() => handleDelete(t.id)}
+                      className="text-xs text-red-500 hover:underline"
                     >
-                      <button className="text-xs text-red-500 hover:underline">
-                        Delete
-                      </button>
-                    </form>
+                      Delete
+                    </button>
                   </div>
                 </td>
               </tr>
             ))}
-            {(!templates || templates.length === 0) && (
+            {templates.length === 0 && (
               <tr>
                 <td colSpan={5} className="px-4 py-10 text-center text-zinc-400">
                   No templates yet.

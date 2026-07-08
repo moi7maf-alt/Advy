@@ -1,20 +1,33 @@
 "use client";
 
-import { useActionState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { login } from "@/app/lib/supabase/actions";
+import { createClient } from "@/app/lib/supabase/client";
 
 export default function LoginPage() {
   const router = useRouter();
+  const supabase = createClient();
+  const [error, setError] = useState("");
+  const [pending, setPending] = useState(false);
 
-  const [state, formAction, pending] = useActionState(
-    async (_prev: { error?: string }, formData: FormData) => {
-      const result = await login(formData);
-      if (result.ok) router.push("/admin");
-      return { error: result.error ?? undefined };
-    },
-    { error: undefined as string | undefined }
-  );
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setPending(true);
+    setError("");
+
+    const form = new FormData(e.currentTarget);
+    const { error: err } = await supabase.auth.signInWithPassword({
+      email: form.get("email") as string,
+      password: form.get("password") as string,
+    });
+
+    if (err) {
+      setError(err.message);
+      setPending(false);
+    } else {
+      router.push("/admin");
+    }
+  };
 
   return (
     <div className="flex-1 flex items-center justify-center bg-zinc-50">
@@ -22,7 +35,7 @@ export default function LoginPage() {
         <h1 className="text-2xl font-bold text-zinc-900 mb-1">Admin Login</h1>
         <p className="text-sm text-zinc-500 mb-6">Sign in to manage templates</p>
 
-        <form action={formAction} className="flex flex-col gap-4">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <input
             name="email"
             type="email"
@@ -37,9 +50,7 @@ export default function LoginPage() {
             required
             className="h-10 rounded-lg border border-zinc-300 px-3 text-sm outline-none focus:border-accent"
           />
-          {state?.error && (
-            <p className="text-sm text-red-500">{state.error}</p>
-          )}
+          {error && <p className="text-sm text-red-500">{error}</p>}
           <button
             disabled={pending}
             className="h-10 rounded-lg bg-accent text-white text-sm font-medium hover:bg-blue-600 disabled:bg-zinc-300 transition-colors"

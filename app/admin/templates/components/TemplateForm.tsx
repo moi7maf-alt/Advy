@@ -1,12 +1,13 @@
 "use client";
 
-import { useActionState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { createClient } from "@/app/lib/supabase/client";
 
 interface Props {
-  action: (formData: FormData) => Promise<{ ok?: boolean; error?: string }>;
   categories: string[];
   defaults?: {
+    id?: number;
     name: string;
     category: string;
     dimensions: string;
@@ -14,20 +15,73 @@ interface Props {
   };
 }
 
-export default function TemplateForm({ action, categories, defaults }: Props) {
+export default function TemplateForm({ categories, defaults }: Props) {
   const router = useRouter();
+  const supabase = createClient();
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
 
-  const [state, formAction, pending] = useActionState(
-    async (_prev: { error?: string }, formData: FormData) => {
-      const result = await action(formData);
-      if (result.ok) router.push("/admin/templates");
-      return { error: result.error ?? undefined };
-    },
-    { error: undefined as string | undefined }
-  );
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setSaving(true);
+    setError("");
+
+    const form = new FormData(e.currentTarget);
+    const name = form.get("name") as string;
+    const category = form.get("category") as string;
+    const dimensions = form.get("dimensions") as string;
+    const image = form.get("image") as File | null;
+
+    let image_url = defaults?.image_url ?? "";
+
+    if (image && image.size > 0) {
+      const ext = image.name.split(".").pop();
+      const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from("template-images")
+        .upload(path, image);
+
+      if (uploadError) {
+        setError(uploadError.message);
+        setSaving(false);
+        return;
+      }
+
+      const { data: urlData } = supabase.storage
+        .from("template-images")
+        .getPublicUrl(path);
+
+      image_url = urlData.publicUrl;
+    }
+
+    if (defaults?.id) {
+      const { error: updateError } = await supabase
+        .from("templates")
+        .update({ name, category, dimensions, image_url })
+        .eq("id", defaults.id);
+
+      if (updateError) {
+        setError(updateError.message);
+        setSaving(false);
+        return;
+      }
+    } else {
+      const { error: insertError } = await supabase
+        .from("templates")
+        .insert({ name, category, dimensions, image_url });
+
+      if (insertError) {
+        setError(insertError.message);
+        setSaving(false);
+        return;
+      }
+    }
+
+    router.push("/admin/templates");
+  };
 
   return (
-    <form action={formAction} className="flex flex-col gap-4">
+    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <div>
         <label className="text-sm text-zinc-600 mb-1 block">Name</label>
         <input
@@ -83,16 +137,14 @@ export default function TemplateForm({ action, categories, defaults }: Props) {
         )}
       </div>
 
-      {state?.error && (
-        <p className="text-sm text-red-500">{state.error}</p>
-      )}
+      {error && <p className="text-sm text-red-500">{error}</p>}
 
       <div className="flex gap-3 mt-2">
         <button
-          disabled={pending}
+          disabled={saving}
           className="h-10 rounded-lg bg-accent text-white text-sm font-medium px-6 hover:bg-blue-600 disabled:bg-zinc-300 transition-colors"
         >
-          {pending ? "Saving…" : "Save"}
+          {saving ? "Saving…" : "Save"}
         </button>
         <button
           type="button"
