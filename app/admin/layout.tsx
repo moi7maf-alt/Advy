@@ -32,6 +32,15 @@ export default async function AdminLayout({
           Templates
         </Link>
 
+        <div className="mt-4 pt-4 border-t border-zinc-800">
+          <Link
+            href="/"
+            className="px-3 py-2 rounded-md text-sm hover:bg-zinc-800 hover:text-zinc-200 transition-colors block"
+          >
+            &larr; Home
+          </Link>
+        </div>
+
         <div className="mt-auto pt-4 border-t border-zinc-800">
           <form action={logout}>
             <button className="w-full text-left px-3 py-2 rounded-md text-sm text-zinc-500 hover:bg-zinc-800 hover:text-red-400 transition-colors">
