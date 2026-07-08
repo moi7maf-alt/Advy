@@ -2,9 +2,10 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { templates, categories } from "@/app/lib/templates";
+import { categories } from "@/app/lib/templates";
+import type { Template } from "@/app/lib/templates";
 
-export default function Gallery() {
+export default function Gallery({ templates }: { templates: Template[] }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const activeCategory = searchParams.get("cat") || "All";
@@ -43,8 +44,11 @@ export default function Gallery() {
             href={`/editor/${t.id}`}
             className="group bg-zinc-800/50 border border-zinc-700/50 rounded-xl p-5 hover:border-accent hover:bg-zinc-800 transition-all duration-200 block"
           >
-            <div className="w-full aspect-[4/3] rounded-lg bg-zinc-700/50 mb-4 flex items-center justify-center text-zinc-500 text-sm group-hover:bg-zinc-700/70 transition-colors">
-              {t.dimensions}
+            <div
+              className="w-full aspect-[4/3] rounded-lg bg-zinc-700/50 mb-4 flex items-center justify-center text-zinc-500 text-sm bg-cover bg-center group-hover:bg-zinc-700/70 transition-colors"
+              style={t.image_url ? { backgroundImage: `url(${t.image_url})` } : undefined}
+            >
+              {!t.image_url && t.dimensions}
             </div>
             <div>
               <span className="inline-block px-2 py-0.5 rounded-md bg-zinc-700 text-zinc-300 text-xs font-medium mb-2">

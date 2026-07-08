@@ -4,21 +4,9 @@ import { useState, useRef, useCallback } from "react";
 import Draggable, { DraggableData, DraggableEvent } from "react-draggable";
 import Link from "next/link";
 import html2canvas from "html2canvas";
-import { templates } from "@/app/lib/templates";
+import type { Template } from "@/app/lib/templates";
 
-const categoryColors: Record<string, string> = {
-  Food: "from-orange-500/30 to-red-500/30",
-  Phones: "from-blue-500/30 to-cyan-500/30",
-  Cars: "from-red-500/30 to-yellow-500/30",
-  Retail: "from-purple-500/30 to-pink-500/30",
-  "Digital Books": "from-emerald-500/30 to-teal-500/30",
-  Plants: "from-green-500/30 to-lime-500/30",
-  Animals: "from-amber-500/30 to-yellow-500/30",
-};
-
-export default function Editor({ id }: { id: string }) {
-  const template = templates.find((t) => t.id === Number(id));
-  const [bgImage, setBgImage] = useState<string | null>(null);
+export default function Editor({ template }: { template: Template }) {  const [bgImage, setBgImage] = useState<string | null>(null);
   const [imageSize, setImageSize] = useState({ width: 200, height: 200 });
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const workspaceRef = useRef<HTMLDivElement>(null);

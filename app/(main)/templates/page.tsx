@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { getTemplates } from "@/app/lib/supabase/queries";
 import Gallery from "@/app/(main)/components/Gallery";
 
 function GalleryFallback() {
@@ -15,10 +16,12 @@ function GalleryFallback() {
   );
 }
 
-export default function Home() {
+export default async function TemplatesPage() {
+  const templates = await getTemplates();
+
   return (
     <Suspense fallback={<GalleryFallback />}>
-      <Gallery />
+      <Gallery templates={templates} />
     </Suspense>
   );
 }
